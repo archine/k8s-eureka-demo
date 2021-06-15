@@ -1,0 +1,46 @@
+before_script:
+  - export IMAGE_FULL_NAME=${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHA}
+stages:
+  - compile
+  - build
+  - run
+variables:
+  MAVEN_REPO: "/.m2"
+  PROJECT_NAME: "k8s-eureka"
+  K8S_FILE: "eureka-k8s.yml"
+compile:
+  stage: compile
+  image: 172.20.9.4:5001/gjing/maven:1.0
+  only:
+    - master
+  tags:
+    - pub
+  script:
+    - mvn -Dmaven.repo.local=$MAVEN_REPO clean package -Dmaven.test.skip=true
+  artifacts:
+    name: $PROJECT
+    expire_in: 1week
+    paths:
+      - target/*.jar
+build:
+  stage: build
+  image: docker:stable
+  only:
+    - master
+  tags:
+    - pub
+  script:
+    - docker login --username $CI_REGISTER_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_FULL_NAME .
+    - docker push $IMAGE_FULL_NAME
+    - docker rmi -f $IMAGE_FULL_NAME
+run:
+  stage: run
+  image: roffe/kubectl
+  only:
+    - master
+  tags:
+    - pub
+  script:
+    - mkdir -p /root/.kube
+    -

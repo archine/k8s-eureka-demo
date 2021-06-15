@@ -1,0 +1,16 @@
+server:
+  port: ${EUREKA_HOST:8761}
+spring:
+  application:
+    name: ${SERVER_NAME:k8s-eureka-demo}
+eureka:
+  client:
+    fetch-registry: ${FETCH_EUREKA:false}
+    register-with-eureka: ${REGISTER_EUREKA:false}
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+  instance:
+    hostname: ${HOST_NAME:localhost}
+    prefer-ip-address: ${PREFER_IP:false}
+  server:
+    enable-self-preservation: false
