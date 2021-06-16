@@ -30,7 +30,7 @@ build:
   tags:
     - pub
   script:
-    - docker login --username $CI_REGISTER_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker login --username $CI_REGISTRY_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
     - docker build -t $IMAGE_FULL_NAME .
     - docker push $IMAGE_FULL_NAME
     - docker rmi -f $IMAGE_FULL_NAME
