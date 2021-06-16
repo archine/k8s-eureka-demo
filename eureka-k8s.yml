@@ -1,4 +1,4 @@
-apiVersion: v1
+apiVersion:v1
 kind: ConfigMap
 metadata:
   name: eureka-host
@@ -18,10 +18,9 @@ spec:
   selector:
     app: {PROJECT_NAME}
   ports:
-    type: NodePort
     - port: {PROJECT_PORT}
       name: {PROJECT_NAME}
-      targetPort: {PROJECT_PORT}
+  clusterIP: None
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -30,7 +29,7 @@ metadata:
   namespace: {PROJECT_NAMESPACE}
 spec:
   replicas: 3
-  serviceName: {PROJECT_NAME}
+  seviceName: {PROJECT_NAME}
   selector:
     matchLabels: # 匹配下方的template中定义的label
       app: {PROJECT_NAME}
@@ -40,7 +39,7 @@ spec:
         app: {PROJECT_NAME}
     spec:
       containers:
-        - name: test
+        - name: "test"
           image: {PROJECT_IMAGE}
           ports:
             - containerPort: {PROJECT_PORT}
