@@ -5,12 +5,11 @@ metadata:
   namespace: {PROJECT_NAMESPACE}
 data:
   # http://<pod名称>.<容器名>:<容器端口>
-  registry_url: http://{PROJECT_NAME}-0.test:8072/eureka/,http://{PROJECT_NAME}-2.test:8072/eureka/,http://{PROJECT_NAME}-3.test:8072/eureka/
----
+  registry_url: http://{PROJECT_NAME}-0.test:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.test:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-3.test
 apiVersion: v1
 kind: Service
 metadata:
-  name: test
+  name: {PROJECT_NAME}
   namespace: {PROJECT_NAMESPACE}
   labels:
     app: {PROJECT_NAME}
@@ -19,8 +18,8 @@ spec:
     app: {PROJECT_NAME}
   ports:
     type: NodePort
-    - port: 8072
-      name: test
+    - port: {PROJECT_PORT}
+      name: {PROJECT_NAME}
       targetPort: {PROJECT_PORT}
 ---
 apiVersion: apps/v1
@@ -40,7 +39,7 @@ spec:
         app: {PROJECT_NAME}
     spec:
       containers:
-        - name: {PROJECT_NAME}
+        - name: test
           image: {PROJECT_IMAGE}
           ports:
             - containerPort: {PROJECT_PORT}
