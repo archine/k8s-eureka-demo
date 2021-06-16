@@ -48,7 +48,7 @@ run:
     - mkdir -p /root/.kube
     - echo ${KUBE_CONFIG} | base64 -d > /root/.kube/config
     - export KUBECONFIG=/root/.kube/config
-    - kubectl -version
+    - kubectl version
     - sed -i "s#{PROJECT_NAME}#$PROJECT_NAME#g
       s#{PROJECT_PORT}#$PROJECT_PORT#G"
       s#{PROJECT_NAMESPACE}#$PROJECT_NAMESPACE#g
