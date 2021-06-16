@@ -29,7 +29,7 @@ metadata:
   namespace: {PROJECT_NAMESPACE}
 spec:
   replicas: 3
-  seviceName: {PROJECT_NAME}
+  serviceName: {PROJECT_NAME}
   selector:
     matchLabels: # 匹配下方的template中定义的label
       app: {PROJECT_NAME}
