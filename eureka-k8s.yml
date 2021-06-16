@@ -60,16 +60,16 @@ spec:
             - name: HOST_NAME
               value: "$(POD_NAME}.{PROJECT_NAME}"
 ---
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: {PROJECT_NAME}
-  namespace: {PROJECT_NAMESPACE}
-spec:
-  rules:
-    - host: eureka.snowbd.onesport.com.cn
-      http:
-        paths:
-          - backend:
-              serviceName: {PROJECT_NAME}
-              servicePort: {PROJECT_PORT}
+#apiVersion: extensions/v1beta1
+#kind: Ingress
+#metadata:
+#  name: {PROJECT_NAME}
+#  namespace: {PROJECT_NAMESPACE}
+#spec:
+#  rules:
+#    - host: eureka.snowbd.onesport.com.cn
+#      http:
+#        paths:
+#          - backend:
+#              serviceName: {PROJECT_NAME}
+#              servicePort: {PROJECT_PORT}
