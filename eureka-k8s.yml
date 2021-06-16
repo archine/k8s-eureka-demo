@@ -45,13 +45,13 @@ spec:
             - containerPort: {PROJECT_PORT}
           env:
             - name: EUREKA_HOST
-              value: {PROJECT_PORT}
+              value: "{PROJECT_PORT}"
             - name: SERVER_NAME
               value: {PROJECT_NAME}
             - name: FETCH_EUREKA
-              value: true
+              value: "true"
             - name: REGISTER_EUREKA
-              value: true
+              value: "true"
             - name: EUREKA_URL
               valueFrom:
                 configMapKeyRef:
