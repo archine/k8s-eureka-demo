@@ -53,4 +53,5 @@ run:
       s#{PROJECT_PORT}#$PROJECT_PORT#g;
       s#{PROJECT_NAMESPACE}#$PROJECT_NAMESPACE#g;
       s#{PROJECT_IMAGE}#$IMAGE_FULL_NAME#g" $K8S_FILE
+    - kubectl delete -f $K8S_FILE
     - kubectl apply -f $K8S_FILE
