@@ -5,12 +5,12 @@ metadata:
   namespace: {PROJECT_NAMESPACE}
 data:
   # http://<pod名称>.<容器名>:<容器端口>
-  registry_url: http://{PROJECT_NAME}-0.test:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.test:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-3.test:{PROJECT_PORT}/eureka/
+  registry_url: http://{PROJECT_NAME}-0.test-service:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.test-service:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-3.test-service:{PROJECT_PORT}/eureka/
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {PROJECT_NAME}
+  name: test-service
   namespace: {PROJECT_NAMESPACE}
   labels:
     app: {PROJECT_NAME}
@@ -40,7 +40,7 @@ spec:
         app: {PROJECT_NAME}
     spec:
       containers:
-        - name: test
+        - name: {PROJECT_NAME}
           image: {PROJECT_IMAGE}
           ports:
             - containerPort: {PROJECT_PORT}
