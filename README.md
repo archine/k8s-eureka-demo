@@ -1,4 +1,4 @@
-> 在k8s中部署Eureka集群
+> 在k8s集群中通过CICD进行部署Eureka集群
 ## 一、背景
 普通后端如果想要同时起多个服务来进行``负载均衡``，可以通过部署``Deployment``并调整``Pod``的数量，然后交由``Service``来代理这些``Pod``，
 而对于``Eureka``而言，这样做就没那么方便了，因为``Eureka``之间还需要``互相注册``，因此需要做一些特殊的改动。
@@ -54,8 +54,11 @@ spring:
     name: ${SERVER_NAME:k8s-eureka-demo}
 eureka:
   client:
+    # 从eureka获取注册信息
     fetch-registry: ${FETCH_EUREKA:false}
+    # 注册自己
     register-with-eureka: ${REGISTER_EUREKA:false}
+    # 服务注册中心地址
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
   instance:
@@ -64,4 +67,136 @@ eureka:
   server:
     # 关闭安全模式
     enable-self-preservation: false
+```
+### 4、Dockerfile
+```dockerfile
+FROM openjdk:8-jdk
+COPY target/*.jar app.jar
+ENTRYPOINT java $JAVA_OPTS -jar $CONFIG app.jar
+```
+### 5、CI脚本文件
+不是很熟悉CI写法的建议先看阅读：[SpringBoot使用CICD](https://www.jianshu.com/p/8764328efe21)
+```yaml
+before_script:
+  - export IMAGE_FULL_NAME=${CI_REGISTRY_IMAGE}:${CI_COMMIT_REF_SLUG}-${CI_COMMIT_SHA}
+stages:
+  - compile
+  - build
+  - run
+variables:
+  MAVEN_REPO: "/.m2"
+  PROJECT_NAME: "k8s-eureka"
+  K8S_FILE: "eureka-k8s.yml"
+compile:
+  stage: compile
+  image: 172.20.9.4:5001/gjing/maven:1.0
+  only:
+    - master
+  tags:
+    - pub
+  script:
+    - mvn -Dmaven.repo.local=$MAVEN_REPO clean package -Dmaven.test.skip=true
+  artifacts:
+    name: $PROJECT
+    expire_in: 1week
+    paths:
+      - target/*.jar
+build:
+  stage: build
+  image: docker:stable
+  only:
+    - master
+  tags:
+    - pub
+  script:
+    - docker login --username $CI_REGISTRY_USER --password $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $IMAGE_FULL_NAME .
+    - docker push $IMAGE_FULL_NAME
+    - docker rmi -f $IMAGE_FULL_NAME
+run:
+  stage: run
+  image: roffe/kubectl
+  only:
+    - master
+  tags:
+    - pub
+  variables:
+    PROJECT_PORT: 8761
+    PROJECT_NAMESPACE: gj
+  script:
+    - mkdir -p /root/.kube
+    - echo ${KUBE_CONFIG} | base64 -d > /root/.kube/config
+    - export KUBECONFIG=/root/.kube/config
+    - kubectl version
+    - sed -i "s#{PROJECT_NAME}#$PROJECT_NAME#g;
+      s#{PROJECT_PORT}#$PROJECT_PORT#g;
+      s#{PROJECT_NAMESPACE}#$PROJECT_NAMESPACE#g;
+      s#{PROJECT_IMAGE}#$IMAGE_FULL_NAME#g" $K8S_FILE
+    - kubectl apply -f $K8S_FILE
+```
+### 6、项目的k8s文件
+创建一个名为``eureka-k8s.yml``文件
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eureka-host
+  namespace: {PROJECT_NAMESPACE}
+data:
+  registry_url: http://{PROJECT_NAME}-0.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-1.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.{PROJECT_NAME}:{PROJECT_PORT}/eureka/
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {PROJECT_NAME}
+  namespace: {PROJECT_NAMESPACE}
+  labels:
+    app: {PROJECT_NAME}
+spec:
+  selector:
+    app: {PROJECT_NAME}
+  ports:
+    - port: {PROJECT_PORT}
+      name: {PROJECT_NAME}
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {PROJECT_NAME}
+  namespace: {PROJECT_NAMESPACE}
+spec:
+  replicas: 3
+  serviceName: {PROJECT_NAME}
+  selector:
+    matchLabels: # 匹配下方的template中定义的label
+      app: {PROJECT_NAME}
+  template:
+    metadata:
+      labels:
+        app: {PROJECT_NAME}
+    spec:
+      containers:
+        - name: {PROJECT_NAME}
+          image: {PROJECT_IMAGE}
+          ports:
+            - containerPort: {PROJECT_PORT}
+          env:
+            - name: EUREKA_HOST
+              value: "{PROJECT_PORT}"
+            - name: SERVER_NAME
+              value: {PROJECT_NAME}
+            - name: FETCH_EUREKA
+              value: "true"
+            - name: REGISTER_EUREKA
+              value: "true"
+            - name: EUREKA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: eureka-host
+                  key: registry_url
+            - name: HOST_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
 ```

@@ -1,9 +1,10 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
+# 定义一个ConfigMap用于存储eureka的注册中心地址
+apiVersion: v1 # 版本号
+kind: ConfigMap # 类型
+metadata: # 定义元数据，名称与命名空间
   name: eureka-host
   namespace: {PROJECT_NAMESPACE}
-data:
+data: # 定义这个ConfigMap要存储的数据
   registry_url: http://{PROJECT_NAME}-0.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-1.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.{PROJECT_NAME}:{PROJECT_PORT}/eureka/
 ---
 apiVersion: v1
@@ -42,7 +43,16 @@ spec:
           image: {PROJECT_IMAGE}
           ports:
             - containerPort: {PROJECT_PORT}
-          env:
+          readinessProbe: # 就绪检查
+            httpGet:
+              path: /actuator/health
+              port: {PROJECT_PORT}
+            failureThreashold: 3 # 探测失败的重试次数，如果超过3次了没成功就认定为pod是失败的状态
+            initialDelaySeconds: 60 # pod启动延迟多久进行一次检查
+            periodSeconds: 10 # 检测的时间间隔
+            successThreashold: 1 # 只要一次成功就认为pod是正常的
+            timeoutSeconds: 10 # 检测的超时时间，如果超时了就认为是失败的一个状态
+          env: # 配置环境变量
             - name: EUREKA_HOST
               value: "{PROJECT_PORT}"
             - name: SERVER_NAME
