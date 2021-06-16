@@ -20,7 +20,7 @@ spec:
   ports:
     - port: {PROJECT_PORT}
       name: {PROJECT_NAME}
-      targetPort: {PROJECT_PORT}
+#      targetPort: {PROJECT_PORT}
   clusterIP: None
 ---
 apiVersion: apps/v1
