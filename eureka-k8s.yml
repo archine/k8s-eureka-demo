@@ -4,7 +4,6 @@ metadata:
   name: eureka-host
   namespace: {PROJECT_NAMESPACE}
 data:
-  # http://<pod名称>.<容器名>:<容器端口>
   registry_url: http://{PROJECT_NAME}-0.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-1.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.{PROJECT_NAME}:{PROJECT_PORT}/eureka/
 ---
 apiVersion: v1
@@ -58,3 +57,19 @@ spec:
                 configMapKeyRef:
                   name: eureka-host
                   key: registry_url
+            - name: HOST_NAME
+              value: "${PodName}.{PROJECT_NAME}"
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {PROJECT_NAME}
+  namespace: {PROJECT_NAMESPACE}
+spec:
+  rules:
+    - host: eureka.snowbd.onesport.com.cn
+      http:
+        paths:
+          - backend:
+              serviceName: {PROJECT_NAME}
+              servicePort: {PROJECT_PORT}
