@@ -5,7 +5,7 @@ metadata:
   namespace: {PROJECT_NAMESPACE}
 data:
   # http://<pod名称>.<容器名>:<容器端口>
-  registry_url: http://{PROJECT_NAME}-0.eureka-svc:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.eureka-svc:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-3.eureka-svc:{PROJECT_PORT}/eureka/
+  registry_url: http://{PROJECT_NAME}-0.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-3.{PROJECT_NAME}:{PROJECT_PORT}/eureka/
 ---
 apiVersion: v1
 kind: Service
@@ -30,7 +30,7 @@ metadata:
   namespace: {PROJECT_NAMESPACE}
 spec:
   replicas: 3
-  serviceName: eureka-svc
+  serviceName: {PROJECT_NAME}
   selector:
     matchLabels: # 匹配下方的template中定义的label
       app: {PROJECT_NAME}
