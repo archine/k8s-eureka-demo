@@ -19,7 +19,6 @@ spec:
   ports:
     - port: {PROJECT_PORT}
       name: {PROJECT_NAME}
-#      targetPort: {PROJECT_PORT}
   clusterIP: None
 ---
 apiVersion: apps/v1
@@ -57,10 +56,10 @@ spec:
                 configMapKeyRef:
                   name: eureka-host
                   key: registry_url
-#            - name: HOST_NAME
-#              valueFrom:
-#                fieldRef:
-#                  fieldPath: metadata.name
+            - name: HOST_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
 ---
 #apiVersion: extensions/v1beta1
 #kind: Ingress

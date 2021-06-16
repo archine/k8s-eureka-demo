@@ -61,7 +61,6 @@ eureka:
   instance:
     # 当前实例的主机名称
     hostname: ${HOST_NAME:localhost}
-    prefer-ip-address: ${PREFER_IP:false}
   server:
     # 关闭安全模式
     enable-self-preservation: false
