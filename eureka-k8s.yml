@@ -5,22 +5,22 @@ metadata:
   namespace: {PROJECT_NAMESPACE}
 data:
   # http://<pod名称>.<容器名>:<容器端口>
-  registry_url: http://{PROJECT_NAME}-0.test-service:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.test-service:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-3.test-service:{PROJECT_PORT}/eureka/
+  registry_url: http://{PROJECT_NAME}-0.test:8072/eureka/,http://{PROJECT_NAME}-2.test:8072/eureka/,http://{PROJECT_NAME}-3.test:8072/eureka/
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: test-service
+  name: test
   namespace: {PROJECT_NAMESPACE}
   labels:
     app: {PROJECT_NAME}
 spec:
-  type: NodePort
   selector:
     app: {PROJECT_NAME}
   ports:
-    - port: {PROJECT_PORT}
-      name: {PROJECT_NAME}
+    type: NodePort
+    - port: 8072
+      name: test
       targetPort: {PROJECT_PORT}
 ---
 apiVersion: apps/v1
