@@ -1,3 +1,12 @@
+apiVersion:v1
+kind: ConfigMap
+metadata:
+  name: eureka_host
+  namespace: {PROJECT_NAMESPACE}
+data:
+  # http://<pod名称>.<容器名>:<容器端口>
+  registry_url: http://{PROJECT_NAME}-0.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-3.{PROJECT_NAME}:{PROJECT_PORT}/eureka/
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -5,9 +14,6 @@ metadata:
   namespace: {PROJECT_NAMESPACE}
   labels:
     app: {PROJECT_NAME}
-data:
-  # http://<pod名称>.<容器名>:<容器端口>
-  eureka_registry_url: http://{PROJECT_NAME}-0.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-3.{PROJECT_NAME}:{PROJECT_PORT}/eureka/
 spec:
   selector:
     app: {PROJECT_NAME}
@@ -48,5 +54,6 @@ spec:
               value: true
             - name: EUREKA_URL
               valueFrom:
-                filedRef:
-                  fieldPath: data.eureka_registry_url
+                configMapKeyRef:
+                  name: eureka_host
+                  fieldPath: registry_url
