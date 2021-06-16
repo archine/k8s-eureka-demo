@@ -41,6 +41,16 @@ run:
     - master
   tags:
     - pub
+  variables:
+    PROJECT_PORT: 8761
+    PROJECT_NAMESPACE: gj
   script:
     - mkdir -p /root/.kube
-    -
+    - echo ${KUBE_CONFIG} | base64 -d > /root/.kube/config
+    - export KUBECONFIG=/root/.kube/config
+    - kubectl -version
+    - sed -i "s#{PROJECT_NAME}#$PROJECT_NAME#g
+      s#{PROJECT_PORT}#$PROJECT_PORT#G"
+      s#{PROJECT_NAMESPACE}#$PROJECT_NAMESPACE#g
+      s#{PROJECT_IMAGE}#$IMAGE_FULL_NAME#g" $K8S_FILE
+    - kubectl apply -f $K8S_FILE
