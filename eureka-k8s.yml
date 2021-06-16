@@ -58,7 +58,7 @@ spec:
                   name: eureka-host
                   key: registry_url
             - name: HOST_NAME
-              value: "${PodName}.{PROJECT_NAME}"
+              value: "$(POD_NAME}.{PROJECT_NAME}"
 ---
 apiVersion: extensions/v1beta1
 kind: Ingress
