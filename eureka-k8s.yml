@@ -17,10 +17,11 @@ metadata:
 spec:
   selector:
     app: {PROJECT_NAME}
+  type: NodePort
   ports:
     - port: {PROJECT_PORT}
       name: {PROJECT_NAME}
-  clusterIP: None
+      targetPort: {PROJECT_PORT}
 ---
 apiVersion: apps/v1
 kind: StatefulSet
