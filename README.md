@@ -124,64 +124,77 @@ run:
     PROJECT_PORT: 8761
     PROJECT_NAMESPACE: gj
   script:
+    # 配置 kubectl, ${KUBE_CONFIG}这个变量会在下面发布的章节介绍如何配置
     - mkdir -p /root/.kube
     - echo ${KUBE_CONFIG} | base64 -d > /root/.kube/config
     - export KUBECONFIG=/root/.kube/config
     - kubectl version
+    # 修改k8s文件里的一些变量
     - sed -i "s#{PROJECT_NAME}#$PROJECT_NAME#g;
       s#{PROJECT_PORT}#$PROJECT_PORT#g;
       s#{PROJECT_NAMESPACE}#$PROJECT_NAMESPACE#g;
       s#{PROJECT_IMAGE}#$IMAGE_FULL_NAME#g" $K8S_FILE
+    # 创建
     - kubectl apply -f $K8S_FILE
 ```
 ### 6、项目的k8s文件
 创建一个名为``eureka-k8s.yml``文件
 ```yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
+# 定义一个ConfigMap用于存储eureka的注册中心地址
+apiVersion: v1 # 版本号
+kind: ConfigMap # 类型
+metadata: # 定义元数据，名称与命名空间
   name: eureka-host
   namespace: {PROJECT_NAMESPACE}
-data:
+data: # 定义这个ConfigMap要存储的数据
   registry_url: http://{PROJECT_NAME}-0.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-1.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.{PROJECT_NAME}:{PROJECT_PORT}/eureka/
----
+--- # 定义service
 apiVersion: v1
 kind: Service
-metadata:
+metadata: # service的元数据，包含名称、命名空间、标签
   name: {PROJECT_NAME}
   namespace: {PROJECT_NAMESPACE}
   labels:
     app: {PROJECT_NAME}
-spec:
-  selector:
+spec: # 定义属性
+  selector: # 需要代理的pod的标签
     app: {PROJECT_NAME}
-  ports:
+  ports: # service的端口
     - port: {PROJECT_PORT}
       name: {PROJECT_NAME}
-  clusterIP: None
----
+  clusterIP: None # 设置为None，表示我们这是一个Headless Service
+--- # 定义一个StatefulSet
 apiVersion: apps/v1
 kind: StatefulSet
-metadata:
+metadata: # 定义元数据，名称与命名空间
   name: {PROJECT_NAME}
   namespace: {PROJECT_NAMESPACE}
 spec:
-  replicas: 3
-  serviceName: {PROJECT_NAME}
+  replicas: 3 # 副本数
+  serviceName: {PROJECT_NAME} # 服务名
   selector:
     matchLabels: # 匹配下方的template中定义的label
       app: {PROJECT_NAME}
-  template:
-    metadata:
+  template: # 定义pod的模板
+    metadata: # 模板的元数据
       labels:
         app: {PROJECT_NAME}
-    spec:
+    spec: # 定义模板的属性
       containers:
         - name: {PROJECT_NAME}
           image: {PROJECT_IMAGE}
           ports:
             - containerPort: {PROJECT_PORT}
-          env:
+          readinessProbe: # 就绪检查
+            httpGet:
+              path: /actuator/health
+              port: {PROJECT_PORT}
+            failureThreshold: 3 # 探测失败的重试次数，如果超过3次了没成功就认定为pod是失败的状态
+            initialDelaySeconds: 60 # pod启动延迟多久进行一次检查
+            periodSeconds: 10 # 检测的时间间隔
+            successThreshold: 1 # 只要一次成功就认为pod是正常的
+            timeoutSeconds: 10 # 检测的超时时间，如果超时了就认为是失败的一个状态
+          env: # 配置环境变量，传递给项目的配置文件
             - name: EUREKA_HOST
               value: "{PROJECT_PORT}"
             - name: SERVER_NAME
@@ -200,3 +213,24 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
 ```
+这时候我们就所有的准备工作都完成了
+## 四、发布
+由于我们配了CI文件，那么当我们代码提交到Gitlab的时候，就会自动进行构建并启动啦
+### 1、配置KUBE_CONFIG变量
+首先，我们先登陆到 k8s master节点服务器上，进入到``/etc/kubernetes/``目录，然后通过``cat admin.conf``将这个文件的内容输出到控制台，最后将复制出来的内容先保存到
+自己电脑的文本编辑器中，然后修改红色框中的地址，将``dns``修改为你的``ApiServer``的IP，如果是多master的话就是填写``ApiServer的LoadBalance IP了``       
+
+![d](updateapiserver.png)    
+
+然后我们复制修改后的所有内容，到浏览器随便搜索一个在线的base64加密工具将内容进行加密。随后，我们来到GitLab，进到具体项目或者项目组里，点击下方图中的选项   
+
+![](gitlabci.png)    
+
+点击后进到下方页面并添加变量，注意：``键``要和你ci里面写的保持一致，值的话就是刚刚加密后的内容了   
+
+![](gitlabvar.png)      
+
+``最好将此变量配置在项目组中，这样该项目组的所有项目都会继承该变量``
+### 2、提交
+上面已经配置了``KUBE_CONFIG``变量了，这时候我们就可以直接提交代码到GitLab啦，提交成功后就可以在GitLab项目左侧的CICD选项中看到流水线在执行
+

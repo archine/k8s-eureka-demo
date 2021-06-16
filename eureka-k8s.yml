@@ -6,38 +6,38 @@ metadata: # 定义元数据，名称与命名空间
   namespace: {PROJECT_NAMESPACE}
 data: # 定义这个ConfigMap要存储的数据
   registry_url: http://{PROJECT_NAME}-0.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-1.{PROJECT_NAME}:{PROJECT_PORT}/eureka/,http://{PROJECT_NAME}-2.{PROJECT_NAME}:{PROJECT_PORT}/eureka/
----
+--- # 定义service
 apiVersion: v1
 kind: Service
-metadata:
+metadata: # service的元数据，包含名称、命名空间、标签
   name: {PROJECT_NAME}
   namespace: {PROJECT_NAMESPACE}
   labels:
     app: {PROJECT_NAME}
-spec:
-  selector:
+spec: # 定义属性
+  selector: # 需要代理的pod的标签
     app: {PROJECT_NAME}
-  ports:
+  ports: # service的端口
     - port: {PROJECT_PORT}
       name: {PROJECT_NAME}
-  clusterIP: None
----
+  clusterIP: None # 设置为None，表示我们这是一个Headless Service
+--- # 定义一个StatefulSet
 apiVersion: apps/v1
 kind: StatefulSet
-metadata:
+metadata: # 定义元数据，名称与命名空间
   name: {PROJECT_NAME}
   namespace: {PROJECT_NAMESPACE}
 spec:
-  replicas: 3
-  serviceName: {PROJECT_NAME}
+  replicas: 3 # 副本数
+  serviceName: {PROJECT_NAME} # 服务名
   selector:
     matchLabels: # 匹配下方的template中定义的label
       app: {PROJECT_NAME}
-  template:
-    metadata:
+  template: # 定义pod的模板
+    metadata: # 模板的元数据
       labels:
         app: {PROJECT_NAME}
-    spec:
+    spec: # 定义模板的属性
       containers:
         - name: {PROJECT_NAME}
           image: {PROJECT_IMAGE}
