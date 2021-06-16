@@ -57,10 +57,10 @@ spec:
                 configMapKeyRef:
                   name: eureka-host
                   key: registry_url
-            - name: HOST_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
+#            - name: HOST_NAME
+#              valueFrom:
+#                fieldRef:
+#                  fieldPath: metadata.name
 ---
 #apiVersion: extensions/v1beta1
 #kind: Ingress
