@@ -15,9 +15,9 @@ metadata:
   labels:
     app: {PROJECT_NAME}
 spec:
+  type: NodePort
   selector:
     app: {PROJECT_NAME}
-  type: NodePort
   ports:
     - port: {PROJECT_PORT}
       name: {PROJECT_NAME}
