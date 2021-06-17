@@ -122,7 +122,7 @@ run:
     - pub
   variables:
     PROJECT_PORT: 8761
-    PROJECT_NAMESPACE: gj
+    PROJECT_NAMESPACE: gj # 命名空间需要提前在k8s中创建好
   script:
     # 配置 kubectl, ${KUBE_CONFIG}这个变量会在下面发布的章节介绍如何配置
     - mkdir -p /root/.kube
@@ -220,30 +220,55 @@ spec:
 首先，我们先登陆到 k8s master节点服务器上，进入到``/etc/kubernetes/``目录，然后通过``cat admin.conf``将这个文件的内容输出到控制台，最后将复制出来的内容先保存到
 自己电脑的文本编辑器中，然后修改红色框中的地址，将``dns``修改为你的``ApiServer``的IP，如果是多master的话就是填写``ApiServer的LoadBalance IP了``       
 
-![d](updateapiserver.png)    
+![d](img/updateapiserver.png)    
 
 然后我们复制修改后的所有内容，到浏览器随便搜索一个在线的base64加密工具将内容进行加密。随后，我们来到GitLab，进到具体项目或者项目组里，点击下方图中的选项   
 
-![](gitlabci.png)    
+![](img/gitlabci.png)    
 
 点击后进到下方页面并添加变量，注意：``键``要和你ci里面写的保持一致，值的话就是刚刚加密后的内容了   
 
-![](gitlabvar.png)      
+![](img/gitlabvar.png)      
 
 ``最好将此变量配置在项目组中，这样该项目组的所有项目都会继承该变量``
 ### 2、提交
 上面已经配置了``KUBE_CONFIG``变量了，这时候我们就可以直接提交代码到GitLab啦，提交成功后就可以在GitLab项目左侧的CICD选项中看到流水线在执行   
 
-![](cirun.png)    
+![](img/cirun.png)    
 
 当三个阶段都打勾了就说明执行成功啦，如果出现了错误，那就可以点击指定阶段进去查看下错误日志进行针对性修改了   
 
-![](cisucc.png)   
+![](img/cisucc.png)   
 
 这时我们可以去master服务器上执行命令查看下pod启动成功没    
 
-![](podsucc.png)    
+![](img/podsucc.png)    
 
 可以看到三个``Pod``都是running状态了，这时我们也可以通过``kubectl logs -f k8s-eureka-0 -n gj``命令进行查看下其中一个``Pod``的日志，这里我们可以看到``Eureka``已经成功起来了   
 
-![](start.png)
+![](img/start.png)
+### 3、检验
+通过第二步，我们通过命令查看已经启动成功了三个``Eureka``副本，这时候，如果我们想通过浏览器访问怎么办呢，这时候就需要定义一个``Ingress``了，我们创建``eureka-ingress.yml``文件，内容如下
+```yaml
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: {PROJECT_NAME} # 这里你自己定义Ingress的名称
+  namespace: {PROJECT_NAMESPACE} # 这里是命名空间，要与Eureka所在的命名空间一样
+spec:
+  rules:
+    - host: eureka.snowbd.onesport.com.cn # 这里更改为你的域名
+      http:
+        paths:
+          - backend:
+              serviceName: {PROJECT_NAME} # 指定后端的Service，也就是Eureka的Service
+              servicePort: {PROJECT_PORT} # Service端口
+```
+定义好后通过``kubectl apply -f eureka-ingress.yml``命令进行构建，构建成功后我们可以通过``kubectl get ingress -n gj``查看到刚刚构建的``Ingress``    
+
+![](img/ingress.png)     
+
+我们通过刚刚配置的域名使用浏览器访问一下``Eureka``的界面，如果访问失败，那就要检查下域名是否正确了    
+
+![](img/eureka.jpg)   
+---
